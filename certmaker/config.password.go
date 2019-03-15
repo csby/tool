@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/csby/security/aes"
 	"github.com/csby/security/encoding"
-	"github.com/ktpswjz/vsgw/gw/security"
 )
 
 type ConfigPassword struct {
@@ -28,11 +27,11 @@ func (s *ConfigPassword) Get() interface{} {
 	if err != nil {
 		return ""
 	}
-	aes := &aes.Aes{
+	aesEncoder := &aes.Aes{
 		Key:       "Pwd#Crt@2019",
 		Algorithm: "AES-128-CBC",
 	}
-	decData, err := aes.Decrypt(data)
+	decData, err := aesEncoder.Decrypt(data)
 	if err != nil {
 		return ""
 	}
@@ -49,17 +48,17 @@ func (s *ConfigPassword) Set(v interface{}) error {
 		*s.value = ""
 		return nil
 	}
-	aes := &security.Aes{
+	aesEncoder := &aes.Aes{
 		Key:       "Pwd#Crt@2019",
 		Algorithm: "AES-128-CBC",
 	}
-	data, err := aes.Encrypt([]byte(value))
+	data, err := aesEncoder.Encrypt([]byte(value))
 	if err != nil {
 		*s.value = ""
 		return nil
 	}
 
-	base64 := &security.Base64{}
+	base64 := &encoding.Base64{}
 	*s.value = base64.EncodeToString(data)
 	return nil
 }
