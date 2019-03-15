@@ -46,7 +46,7 @@ func init() {
 			fmt.Println("load configure file fail: ", err)
 		}
 	}
-	fmt.Println(cfg.FormatString())
+	//fmt.Println(cfg.FormatString())
 
 	updateCount := 0
 	if args.ver != "" {

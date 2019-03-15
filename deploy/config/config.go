@@ -143,5 +143,16 @@ func (s *Config) Example(folderPath string) {
 				Enable: false,
 			},
 		},
+		{
+			Enable: true,
+			Name:   "sqldm",
+			Bin: Binary{
+				Root:  filepath.Join(folderPath, "bin"),
+				Files: s.binaryFilesForSlqDM(),
+			},
+			Src: Source{
+				Enable: false,
+			},
+		},
 	}
 }

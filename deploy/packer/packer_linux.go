@@ -1,5 +1,15 @@
 package packer
 
+import (
+	"archive/tar"
+	"compress/gzip"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+)
+
 func (s *packer) createFile(fileWriter io.Writer, folder string, files ...string) error {
 	gw := gzip.NewWriter(fileWriter)
 	defer gw.Close()

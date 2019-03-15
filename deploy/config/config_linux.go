@@ -21,3 +21,9 @@ func (s *Config) binaryFilesForCrtMgr() map[string]string {
 func (s *Config) enableAppForCrtMgr() bool {
 	return false
 }
+
+func (s *Config) binaryFilesForSlqDM() map[string]string {
+	return map[string]string{
+		"go_build_github_com_csby_tool_datamodel_sqldm_cmd": "sqldm",
+	}
+}
