@@ -16,7 +16,7 @@ func (s *ConfigPackage) EntityPkg() *lib.Package {
 }
 
 func (s *ConfigPackage) ModelPgk() *lib.Package {
-	if s.Entity.Enable {
+	if s.Model.Enable {
 		return &s.Model.Package
 	}
 
