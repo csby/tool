@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/csby/database/sqldb/mssql"
 	"github.com/csby/database/sqldb/mysql"
+	"github.com/csby/database/sqldb/oracle"
 	"github.com/csby/tool/datamodel/sqldm/lib"
 	"github.com/csby/tool/module"
 	"os"
@@ -20,47 +21,106 @@ const (
 var (
 	args = &Args{}
 	cfg  = &Config{
-		Database: ConfigDatabase{
-			MySql: ConfigDatabaseMysql{
-				Enable: true,
-				Connection: mysql.Connection{
-					Server:   "172.0.0.1",
-					Port:     3306,
-					Schema:   "test",
-					Charset:  "utf8",
-					Timeout:  10,
-					User:     "root",
-					Password: "",
+		Items: []*ConfigItem{
+			{
+				Database: ConfigDatabase{
+					Enable: false,
+					Type:   "mysql",
+					Connection: &mysql.Connection{
+						Host:     "172.0.0.1",
+						Port:     3306,
+						Schema:   "test",
+						Charset:  "utf8",
+						Timeout:  10,
+						User:     "root",
+						Password: "",
+					},
+				},
+				Package: ConfigPackage{
+					Entity: ConfigEntity{
+						Enable: false,
+						Package: lib.Package{
+							Name:   "entity",
+							Path:   "github.com/test/mysql/data/entity",
+							Folder: "src/github.com/test/mysql/data/entity",
+						},
+					},
+					Model: ConfigEntity{
+						Enable: false,
+						Package: lib.Package{
+							Name:   "model",
+							Path:   "github.com/test/mysql/data/model",
+							Folder: "src/github.com/test/mysql/data/model",
+						},
+					},
 				},
 			},
-			MsSql: ConfigDatabaseMssql{
-				Enable: false,
-				Connection: mssql.Connection{
-					Server:   "127.0.0.1",
-					Port:     1433,
-					Schema:   "test",
-					Instance: "MSSQLSERVER",
-					User:     "sa",
-					Password: "",
-					Timeout:  10,
+			{
+				Database: ConfigDatabase{
+					Enable: false,
+					Type:   "mssql",
+					Connection: &mssql.Connection{
+						Host:     "172.0.0.1",
+						Port:     1433,
+						Schema:   "test",
+						Instance: "MSSQLSERVER",
+						User:     "sa",
+						Password: "",
+						Timeout:  10,
+					},
+				},
+				Package: ConfigPackage{
+					Entity: ConfigEntity{
+						Enable: false,
+						Package: lib.Package{
+							Name:   "entity",
+							Path:   "github.com/test/mssql/data/entity",
+							Folder: "src/github.com/test/mssql/data/entity",
+						},
+					},
+					Model: ConfigEntity{
+						Enable: false,
+						Package: lib.Package{
+							Name:   "model",
+							Path:   "github.com/test/mssql/data/model",
+							Folder: "src/github.com/test/mssql/data/model",
+						},
+					},
 				},
 			},
-		},
-		Package: ConfigPackage{
-			Entity: ConfigEntity{
-				Enable: true,
-				Package: lib.Package{
-					Name:   "entity",
-					Path:   "github.com/test/data/entity",
-					Folder: "src/github.com/test/data/entity",
+			{
+				Database: ConfigDatabase{
+					Enable: false,
+					Type:   "oracle",
+					Connection: &oracle.Connection{
+						Host:     "172.0.0.1",
+						Port:     1521,
+						SID:      "orcl",
+						User:     "orc",
+						Password: "",
+						Owners: []string{
+							"LAB",
+							"EXAM",
+						},
+					},
 				},
-			},
-			Model: ConfigEntity{
-				Enable: false,
-				Package: lib.Package{
-					Name:   "model",
-					Path:   "github.com/test/data/model",
-					Folder: "src/github.com/test/data/model",
+				Package: ConfigPackage{
+					Entity: ConfigEntity{
+						Enable: false,
+						Package: lib.Package{
+							Name:   "entity",
+							Path:   "github.com/test/oracle/data/entity",
+							Folder: "src/github.com/test/oracle/data/entity",
+						},
+					},
+					Model: ConfigEntity{
+						Enable: false,
+						Package: lib.Package{
+							Name:   "model",
+							Path:   "github.com/test/oracle/data/model",
+							Folder: "src/github.com/test/oracle/data/model",
+						},
+					},
 				},
 			},
 		},
@@ -100,10 +160,19 @@ func init() {
 		}
 	}
 
-	if !filepath.IsAbs(cfg.Package.Entity.Folder) {
-		cfg.Package.Entity.Folder, _ = filepath.Abs(cfg.Package.Entity.Folder)
-	}
-	if !filepath.IsAbs(cfg.Package.Model.Folder) {
-		cfg.Package.Model.Folder, _ = filepath.Abs(cfg.Package.Model.Folder)
+	count := len(cfg.Items)
+	for index := 0; index < count; index++ {
+		item := cfg.Items[index]
+		if item == nil {
+			continue
+		}
+
+		if !filepath.IsAbs(item.Package.Entity.Folder) {
+			item.Package.Entity.Folder, _ = filepath.Abs(item.Package.Entity.Folder)
+		}
+		if !filepath.IsAbs(item.Package.Model.Folder) {
+			item.Package.Model.Folder, _ = filepath.Abs(item.Package.Model.Folder)
+		}
+
 	}
 }

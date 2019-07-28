@@ -86,8 +86,8 @@ func (s *entityDatabase) create(table *sqldb.SqlTable, columns []*sqldb.SqlColum
 		}
 		fmt.Fprintln(entityFile)
 
-		fmt.Fprint(entityFile, "	", s.toFirstUpper(column.Name))
-		fmt.Fprint(entityFile, " ", s.toRuntimeType(column.DataType, column.Nullable))
+		fmt.Fprint(entityFile, "	", s.toFieldName(column.Name))
+		fmt.Fprint(entityFile, " ", s.toRuntimeType(column.DataType, column.Nullable, column.Scale))
 		fmt.Fprint(entityFile, " `sql:\"", column.Name, "\"")
 		if column.AutoIncrement {
 			fmt.Fprint(entityFile, " auto:\"true\"")
@@ -182,9 +182,9 @@ func (s *entityDatabase) createCopyToFunction(entityFile *os.File, entityName st
 	fmt.Fprintln(entityFile, "	}")
 
 	for _, column := range columns {
-		fieldName := s.toFirstUpper(column.Name)
-		sourceType := s.toRuntimeType(column.DataType, column.Nullable)
-		targetType := model.toRuntimeType(column.DataType, column.Nullable)
+		fieldName := s.toFieldName(column.Name)
+		sourceType := s.toRuntimeType(column.DataType, column.Nullable, column.Scale)
+		targetType := model.toRuntimeType(column.DataType, column.Nullable, column.Scale)
 		if sourceType == targetType {
 			fmt.Fprintf(entityFile, "	target.%s = s.%s", fieldName, fieldName)
 		} else {
@@ -254,12 +254,12 @@ func (s *entityDatabase) createCopyFromFunction(entityFile *os.File, entityName 
 
 	for _, column := range columns {
 		fieldName := s.toFieldName(column.Name)
-		sourceType := model.toRuntimeType(column.DataType, column.Nullable)
-		targetType := s.toRuntimeType(column.DataType, column.Nullable)
+		sourceType := model.toRuntimeType(column.DataType, column.Nullable, column.Scale)
+		targetType := s.toRuntimeType(column.DataType, column.Nullable, column.Scale)
 		if sourceType == targetType {
 			fmt.Fprintf(entityFile, "	s.%s = source.%s", fieldName, fieldName)
 		} else {
-			tmpValName := s.toJsonName(fieldName)
+			tmpValName := s.toFirstLower(fieldName)
 			if strings.HasPrefix(targetType, "*") {
 				if strings.HasPrefix(sourceType, "*") {
 					fmt.Fprintf(entityFile, "	if source.%s == nil {", fieldName)

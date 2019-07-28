@@ -18,6 +18,12 @@ func (s *Generator) CreateEntity(database, model *Package) error {
 		return fmt.Errorf("parameter invalid")
 	}
 
+	ver, err := s.Database.Test()
+	if err != nil {
+		return err
+	}
+	fmt.Println("ver:", ver)
+
 	tables, err := s.Database.Tables()
 	if err != nil {
 		return err

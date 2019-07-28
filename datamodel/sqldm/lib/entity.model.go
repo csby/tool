@@ -12,8 +12,10 @@ type entityModel struct {
 	entity
 }
 
-func (s *entityModel) toRuntimeType(v string, nullAble bool) string {
-	if v == "datetime" || v == "date" {
+func (s *entityModel) toRuntimeType(dataType string, nullAble bool, scale *int) string {
+	v := strings.ToLower(dataType)
+
+	if v == "datetime" || v == "date" || v == "datetime2" || v == "timestamp" {
 		return "*types.DateTime"
 	} else if v == "varchar" || v == "nvarchar" || v == "text" || v == "longtext" || v == "time" {
 		return "string"
@@ -21,7 +23,7 @@ func (s *entityModel) toRuntimeType(v string, nullAble bool) string {
 		return "interface{}"
 	}
 
-	return s.entity.toRuntimeType(v, nullAble)
+	return s.entity.toRuntimeType(v, nullAble, scale)
 }
 
 func (s *entityModel) importPackages(columns []*sqldb.SqlColumn) []string {
@@ -29,7 +31,8 @@ func (s *entityModel) importPackages(columns []*sqldb.SqlColumn) []string {
 
 	temps := make(map[string]string, 0)
 	for _, column := range columns {
-		if column.DataType == "datetime" || column.DataType == "date" {
+		columnType := strings.ToLower(column.DataType)
+		if columnType == "datetime" || columnType == "date" || columnType == "datetime2" || columnType == "timestamp" {
 			if _, ok := temps[column.DataType]; !ok {
 				temps[column.DataType] = column.DataType
 				packages = append(packages, "\"github.com/csby/wsf/types\"")
@@ -83,7 +86,7 @@ func (s *entityModel) create(table *sqldb.SqlTable, columns []*sqldb.SqlColumn) 
 			columnNameMaxLength = n
 		}
 
-		n = len(s.toRuntimeType(column.DataType, column.Nullable))
+		n = len(s.toRuntimeType(column.DataType, column.Nullable, column.Scale))
 		if columnTypeMaxLength < n {
 			columnTypeMaxLength = n
 		}
@@ -97,14 +100,14 @@ func (s *entityModel) create(table *sqldb.SqlTable, columns []*sqldb.SqlColumn) 
 			fmt.Fprint(entityFile, " ")
 		}
 
-		columnType := s.toRuntimeType(column.DataType, column.Nullable)
+		columnType := s.toRuntimeType(column.DataType, column.Nullable, column.Scale)
 		fmt.Fprint(entityFile, columnType)
 		n = len(columnType)
 		for i := n; i <= columnTypeMaxLength; i++ {
 			fmt.Fprint(entityFile, " ")
 		}
 
-		fmt.Fprint(entityFile, "`json:\"", s.toFirstLower(column.Name), "\"")
+		fmt.Fprint(entityFile, "`json:\"", s.toJsonName(column.Name), "\"")
 		fmt.Fprint(entityFile, " note:\"", s.getNote(column.Comment), "\"")
 		fmt.Fprintln(entityFile, "`")
 	}

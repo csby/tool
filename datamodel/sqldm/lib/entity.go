@@ -62,21 +62,22 @@ func (s *entity) toFirstLower(v string) string {
 }
 
 func (s *entity) toFileName(v string) string {
-	vs := strings.Split(v, "_")
+	vt := strings.ReplaceAll(v, ".", "_")
+	vs := strings.Split(vt, "_")
 	count := len(vs)
 	if count < 1 {
 		return ""
 	}
 
 	sb := strings.Builder{}
-	name := s.toFirstLower(vs[0])
+	name := strings.ToLower(vs[0])
 	c := 0
 	if len(name) > 0 {
 		sb.WriteString(name)
 		c++
 	}
 	for i := 1; i < count; i++ {
-		name = s.toFirstLower(vs[i])
+		name = strings.ToLower(vs[i])
 		if len(name) > 0 {
 			if c > 0 {
 				sb.WriteString(".")
@@ -90,16 +91,17 @@ func (s *entity) toFileName(v string) string {
 }
 
 func (s *entity) toEntityName(v string) string {
-	vs := strings.Split(v, "_")
+	vt := strings.ReplaceAll(v, ".", "_")
+	vs := strings.Split(vt, "_")
 	count := len(vs)
 	if count < 1 {
 		return ""
 	}
 
 	sb := strings.Builder{}
-	sb.WriteString(s.toFirstUpper(vs[0]))
+	sb.WriteString(s.toFirstUpper(strings.ToLower(vs[0])))
 	for i := 1; i < count; i++ {
-		sb.WriteString(s.toFirstUpper(vs[i]))
+		sb.WriteString(s.toFirstUpper(strings.ToLower(vs[i])))
 	}
 
 	return sb.String()
@@ -110,7 +112,7 @@ func (s *entity) toFieldName(columnName string) string {
 		return "ID"
 	}
 
-	return s.toFirstUpper(columnName)
+	return s.toEntityName(columnName)
 }
 
 func (s *entity) toJsonName(columnName string) string {
@@ -118,13 +120,19 @@ func (s *entity) toJsonName(columnName string) string {
 		return "id"
 	}
 
-	return s.toFirstLower(columnName)
+	v := s.toEntityName(columnName)
+
+	return s.toFirstLower(v)
 }
 
-func (s *entity) toRuntimeType(dataType string, nullable bool) string {
+func (s *entity) toRuntimeType(dataType string, nullable bool, scale *int) string {
 	v := strings.ToLower(dataType)
+	scaleValue := 0
+	if scale != nil {
+		scaleValue = *scale
+	}
 
-	if v == "varchar" || v == "nvarchar" || v == "text" || v == "json" {
+	if v == "varchar" || v == "varchar2" || v == "nvarchar" || v == "nvarchar2" || v == "text" || v == "ntext" || v == "json" {
 		if nullable {
 			return "*string"
 		} else {
@@ -132,7 +140,7 @@ func (s *entity) toRuntimeType(dataType string, nullable bool) string {
 		}
 	} else if v == "longtext" || v == "blob" || v == "time" || v == "binary" || v == "varbinary" || v == "longblob" {
 		return "[]byte"
-	} else if v == "int" || v == "int64" || v == "bigint" || v == "tinyint" {
+	} else if v == "int" || v == "int64" || v == "bigint" || v == "tinyint" || v == "bit" {
 		if nullable {
 			return "*uint64"
 		} else {
@@ -150,8 +158,28 @@ func (s *entity) toRuntimeType(dataType string, nullable bool) string {
 		} else {
 			return "float64"
 		}
-	} else if v == "datetime" || v == "date" {
+	} else if v == "datetime" || v == "date" || v == "datetime2" || v == "timestamp" {
 		return "*time.Time"
+	} else if v == "uniqueidentifier" {
+		if nullable {
+			return "*types.UniqueIdentifier"
+		} else {
+			return "types.UniqueIdentifier"
+		}
+	} else if v == "number" {
+		if scaleValue > 0 {
+			if nullable {
+				return "*float64"
+			} else {
+				return "float64"
+			}
+		} else {
+			if nullable {
+				return "*uint64"
+			} else {
+				return "uint64"
+			}
+		}
 	}
 
 	return v
@@ -173,17 +201,23 @@ func (s *entity) importPackages(columns []*sqldb.SqlColumn, model bool) []string
 
 	temps := make(map[string]string, 0)
 	for _, column := range columns {
-		if column.Type == "datetime" || column.Type == "date" {
-			if _, ok := temps[column.Type]; !ok {
-				temps[column.Type] = column.Type
+		columnType := strings.ToLower(column.DataType)
+		if columnType == "datetime" || columnType == "date" || columnType == "datetime2" || columnType == "timestamp" {
+			if _, ok := temps[columnType]; !ok {
+				temps[columnType] = columnType
 				packages = append(packages, "\"time\"")
 			}
-		} else if column.Type == "json" {
+		} else if columnType == "json" {
 			if model {
-				if _, ok := temps[column.Type]; !ok {
-					temps[column.Type] = column.Type
+				if _, ok := temps[columnType]; !ok {
+					temps[columnType] = columnType
 					packages = append(packages, "\"encoding/json\"")
 				}
+			}
+		} else if columnType == "uniqueidentifier" {
+			if _, ok := temps[columnType]; !ok {
+				temps[columnType] = columnType
+				packages = append(packages, "\"github.com/csby/wsf/types\"")
 			}
 		}
 	}

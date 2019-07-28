@@ -12,6 +12,10 @@ import (
 type Config struct {
 	mutex sync.RWMutex
 
+	Items []*ConfigItem `json:"items"`
+}
+
+type ConfigItem struct {
 	Database ConfigDatabase `json:"database"`
 	Package  ConfigPackage  `json:"package"`
 }
