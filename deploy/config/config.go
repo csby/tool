@@ -96,7 +96,7 @@ func (s *Config) Example(folderPath string) {
 					".git",
 					".idea",
 					".gitignore",
-					"README.md",
+					"go.sum",
 				},
 			},
 			Webs: []Web{

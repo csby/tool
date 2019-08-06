@@ -61,9 +61,11 @@ func init() {
 			updateCount++
 		}
 	}
-	if args.src != cfg.Source {
-		cfg.Source = args.src
-		updateCount++
+	if args.src != nil {
+		if *args.src != cfg.Source {
+			cfg.Source = *args.src
+			updateCount++
+		}
 	}
 
 	if args.help {

@@ -10,7 +10,7 @@ type Args struct {
 	cfg  string
 	ver  string
 	out  string
-	src  bool
+	src  *bool
 	help bool
 }
 
@@ -26,10 +26,11 @@ func (s *Args) Parse(key, value string) {
 	} else if key == strings.ToLower("-out") {
 		s.out = value
 	} else if key == strings.ToLower("-src") {
-		s.src = true
+		src := true
 		if strings.ToLower(value) == "false" {
-			s.src = false
+			src = false
 		}
+		s.src = &src
 	}
 }
 
